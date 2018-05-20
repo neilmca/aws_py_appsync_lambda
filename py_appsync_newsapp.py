@@ -1,90 +1,75 @@
-import logging
+#START - stuff to put into the Lambda
 
+import logging
+import json
+#import boto3 #uncomment when on lambda
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logging.basicConfig()
 
-GET_INDEX = {'field': 'getIndex', 'arguments': {'id': 'top_stories'}}
-GET_ARTICLE = {'field': 'getArticle', 'arguments': {'id': '1'}}
-
+CMS_BUCKET = 'neil-appsync-lambda-news-cms'
+CMS_KEY = 'cms-content.json'
 
 def handler(event, context):
-    indexes = {
-              'top_stories': {
-                  'meta': {
-                      'type': 'index'
-                  },
-                  'items' : [
-                      {
-                          'type' : 'index_card',
-                          'title' : 'Royal Wedding',
-                          'image' : 'http://bbc.co.uk/123.jpg',
-                          'article_link' : '1'
-                      },
-                      {
-                          'type' : 'index_card',
-                          'title' : 'Russia',
-                          'image' : 'http://bbc.co.uk/123.jpg',
-                          'article_link' : '2'
-                      }
-                  ]
-                  
-               }
-              
-              }
-    articles = {
+    
+    #In lambda this is read from S3 using boto3 lib - have not installed locally, so cannot run
+    
+    #read from S3
 
-        '1' : {
-            'meta': {
-                      'type': 'article'
-                  },
-            'items' : [
-                      {
-                          'type' : 'headline_card',
-                          'text' : 'This is a headline'
-                      },
-                      {
-                          'type' : 'main_image_card',
-                          'image' : 'http://bbc.co.uk/123.jpg'
-                      },
-                      {
-                          'type' : 'paragraph_card',
-                          'text' : 'blah'
-                      }
+    s3 = boto3.client('s3')
+    response = s3.get_object(Bucket=CMS_BUCKET, Key=CMS_KEY)
+    cms_content = response['Body'].read().decode('utf-8')
+    cms_content_json = json.loads(cms_content)
+    return handler_with_cms_data(event, context, cms_content_json)
 
-                  ]
-            
-            },
-        '2' : {}
-    }
+def handler_with_cms_data(event, context, cms_content_json):
+    logger.info('got event {}'.format(event))
+    logger.info('got cms data {}'.format(cms_content_json))
 
-   
+    #extract indexs and articles from CMS content
+    indexes = cms_content_json['indexes']
+    articles = cms_content_json['articles']
 
-    logger.info('got event{}'.format(event))
-
-    if event['field'] == 'getIndex':
+    if event['field'] == 'getList':
         args = event['arguments']
         id = args['id']
-        return indexes[str(id)]
-    elif event['field'] == 'getArticle':
-        args = event['arguments']
-        id = args['id']
-        return articles[str(id)]
+        #look in index first
+        item = None
+        if id in indexes.keys():
+            item = indexes[id]
+        elif id in articles.keys():
+            item = articles[id]
+        return item
     else:
         logging.error('unable to resolve field {}'.format(event['field']))
     
     
     logger.error('something went wrong to get here')
     
+#END - stuff to put into the Lambda
+
+
+GET_INDEX = {'field': 'getList', 'arguments': {'id': 'index/top_stories'}}
+GET_ARTICLE = {'field': 'getList', 'arguments': {'id': 'article/1'}}
+
+def handler_local(event, context):
+    #read from json
+    
+
+    with open('cms-content.json') as json_data:
+        cms_content_json = json.load(json_data)
+  
+    handler_with_cms_data(event, context, cms_content_json)
+
 
 def main():
 
     #GET INDEX
-    resp = handler(GET_INDEX, None)
+    resp = handler_local(GET_INDEX, None)
     logging.info(resp)
     #GET ARTICLE
-    resp = handler(GET_ARTICLE, None)
+    resp = handler_local(GET_ARTICLE, None)
     logging.info(resp)
     
 

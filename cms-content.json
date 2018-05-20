@@ -1,0 +1,49 @@
+{
+  "indexes": {
+    "index/top_stories": {
+      "id": "index/top_stories",
+      "meta": {
+        "type": "index"
+      },
+      "items": [
+        {
+          "type": "index_card",
+          "title": "Royal Wedding Last Weekend",
+          "image": "http://bbc.co.uk/123.jpg",
+          "article_link": "article/1"
+        },
+        {
+          "type": "index_card",
+          "title": "Russia",
+          "image": "http://bbc.co.uk/123.jpg",
+          "article_link": "article/2"
+        }
+      ]
+    }
+  },
+  "articles": {
+    "article/1": {
+      "id": "article/1",
+      "meta": {
+        "type": "article"
+      },
+      "items": [
+        {
+          "type": "headline_item",
+          "text": "This is a headline"
+        },
+        {
+          "type": "main_image_item",
+          "image": "http://bbc.co.uk/123.jpg"
+        },
+        {
+          "type": "paragraph_item",
+          "text": "blah"
+        }
+      ]
+    },
+    "article/2": {
+      "id": "article/2"
+    }
+  }
+}
